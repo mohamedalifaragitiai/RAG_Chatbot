@@ -85,3 +85,15 @@ Every time you activate this environment, it will use Python 3.8 automatically b
 ```bash
 $ cp .env .env.example 
 ```
+
+
+## Run FastAPI server 
+
+```bash 
+$ uvicorn main:app --reload  --host  0.0.0.0 
+```
+
+
+### Postman collection path 
+Get postman collection from /home/abuali/Projects/rag_course/RAG_Chatbot/assets
+
