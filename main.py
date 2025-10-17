@@ -1,6 +1,9 @@
 from fastapi import FastAPI
-app = FastAPI()
 
-@app.get("/welcome")
-def welcome():
-    return {"message": "Welcome to the RAG Chatbot API!"}
+from dotenv import load_dotenv
+
+load_dotenv(".env")
+
+from routes import base
+app = FastAPI()
+app.include_router(base.base_router)
