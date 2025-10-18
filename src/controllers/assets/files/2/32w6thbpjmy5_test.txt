@@ -1,0 +1,62 @@
+.
+├── app
+│ ├── chatbot.py
+│ ├── component_db.py
+│ ├── __init__.py
+│ ├── ocr_extract.py
+│ ├── pfd_renderer.py
+│ ├── schema.sql
+│ └── utils.py
+├── data
+│ ├── components.db
+│ └── pfd_fe96069bdc7f42b88841103db020d316.png
+├── main.py
+├── README.md
+├── requirements.txt
+└── static
+└── symbols
+
+### full code of app/chatbot.py ###
+# chatbot.py
+import google.generativeai as genai
+from app.utils import safe_json_loads
+
+class ProcessDesignExpert:
+def __init__(self, all_components):
+self.component_ids = [c['id'] for c in all_components]
+# A more robust system prompt that tells the AI how to format its response
+self.system_prompt = f"""
+You are a dual-mode AI assistant for chemical process design. Your task is to analyze the user's input and respond in ONLY one of two ways, formatted as a single, clean JSON object:
+
+1. **PFD Design Request**: If the user wants to draw, create, or describe a process flow (e.g., "a pump feeds a heater," "connect X to Y"), your entire response MUST be a JSON object with this structure:
+{{"type": "pfd", "data": {{"components": ["ID1", "ID2",...], "connections": [{{"from": "ID1", "to": "ID2"}}]}}, "summary": "A brief, one-sentence summary of the PFD I created for you."}}
+You must use only the component IDs from this list: {self.component_ids}.
+
+2. **General Chat Request**: If the user is asking a question, greeting you (e.g., "hi", "hello"), or anything else, your entire response MUST be a JSON object with this structure:
+{{"type": "chat", "data": "Your friendly, natural language response goes here."}}
+
+Do not include any other text, explanations, or markdown formatting outside of the single JSON object.
+"""
+self.model = genai.GenerativeModel(
+'gemini-2.5-flash',
+system_instruction=self.system_prompt
+)
+self.chat = self.model.start_chat(history=[])
+print("✅ Process Design Expert (Gemini) Initialized with dual-mode prompt.")
+
+def get_response(self, user_message):
+"""
+Gets a structured JSON response from Gemini, which the main app can then parse.
+"""
+try:
+request_options = {"timeout": 60}
+response = self.chat.send_message(user_message, request_options=request_options)
+return safe_json_loads(response.text)
+except Exception as e:
+if "DeadlineExceeded" in str(e):
+return {"type": "chat", "data": "The AI model took too long to respond. Please try simplifying your request or try again later."}
+print(f"Error during Gemini call: {e}")
+return {"type": "chat", "data": f"An error occurred while communicating with the AI: {e}"}
+
+
+
